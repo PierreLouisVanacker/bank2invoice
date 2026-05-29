@@ -5,10 +5,12 @@ Multi-utilisateurs : chaque user ne voit que ses factures.
 
 from __future__ import annotations
 
+import io
+import zipfile
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 
@@ -100,4 +102,40 @@ def download_pdf(
         path=str(pdf_path),
         media_type="application/pdf",
         filename=f"facture_{facture.numero}.pdf",
+    )
+
+
+@router.post("/download-multiple")
+def download_multiple(
+    facture_ids: str = Form(""),
+    user: User = Depends(current_user),
+    session: Session = Depends(get_session),
+):
+    if not facture_ids:
+        raise HTTPException(status_code=400, detail="Aucune facture selectionnee")
+
+    ids = [int(id) for id in facture_ids.split(",") if id.isdigit()]
+    if not ids:
+        raise HTTPException(status_code=400, detail="IDs invalides")
+
+    factures = session.exec(
+        select(Facture).where(Facture.id.in_(ids), Facture.user_id == user.id)
+    ).all()
+
+    if not factures:
+        raise HTTPException(status_code=404, detail="Aucune facture trouvee")
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for facture in factures:
+            pdf_path = Path(facture.pdf_path)
+            if pdf_path.exists():
+                zf.write(pdf_path, arcname=f"facture_{facture.numero}.pdf")
+
+    zip_buffer.seek(0)
+
+    return StreamingResponse(
+        iter([zip_buffer.getvalue()]),
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=factures.zip"},
     )
