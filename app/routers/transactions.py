@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 
@@ -278,3 +278,22 @@ def create_client_from_tx(
             "flash": f"Client « {nom} » créé et associé.",
         },
     )
+
+
+@router.post("/{tx_id}/update-emetteur")
+def update_emetteur(
+    tx_id: int,
+    emetteur_prenom: str = Form(""),
+    emetteur_nom: str = Form(""),
+    user: User = Depends(current_user),
+    session: Session = Depends(get_session),
+):
+    tx = _get_tx_for(tx_id, user, session)
+
+    tx.emetteur_prenom = emetteur_prenom.strip() or None
+    tx.emetteur_nom = emetteur_nom.strip() or None
+
+    session.add(tx)
+    session.commit()
+
+    return JSONResponse({"success": True})

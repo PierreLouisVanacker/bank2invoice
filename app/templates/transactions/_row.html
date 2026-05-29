@@ -40,14 +40,74 @@
 <td>
     {% if tx.est_virement_entrant %}
         {% if tx.emetteur_type == "personne" %}
-            {{ tx.emetteur_civilite or "" }} {{ tx.emetteur_prenom or "" }} <strong>{{ tx.emetteur_nom or "" }}</strong>
+            <span id="emetteur-display-{{ tx.id }}" style="display: flex; gap: 8px; align-items: center;">
+                <span>{{ tx.emetteur_civilite or "" }} {{ tx.emetteur_prenom or "" }} <strong>{{ tx.emetteur_nom or "" }}</strong></span>
+                <button class="secondary" type="button"
+                        style="font-size: 0.75rem; padding: 2px 6px;"
+                        onclick="toggleEditEmetteur({{ tx.id }})">
+                    Editer
+                </button>
+            </span>
+            <span id="emetteur-edit-{{ tx.id }}" style="display: none; gap: 4px; align-items: center; gap: 4px;">
+                <input type="text" class="inline-input" placeholder="Prenom"
+                       id="emetteur_prenom_{{ tx.id }}" value="{{ tx.emetteur_prenom or '' }}"
+                       style="width: 80px; font-size: 0.85rem;">
+                <input type="text" class="inline-input" placeholder="Nom"
+                       id="emetteur_nom_{{ tx.id }}" value="{{ tx.emetteur_nom or '' }}"
+                       style="width: 100px; font-size: 0.85rem;">
+                <button class="secondary" type="button"
+                        style="font-size: 0.75rem; padding: 2px 6px;"
+                        onclick="saveEmetteur({{ tx.id }})">
+                    OK
+                </button>
+                <button class="secondary" type="button"
+                        style="font-size: 0.75rem; padding: 2px 6px;"
+                        onclick="toggleEditEmetteur({{ tx.id }})">
+                    Annuler
+                </button>
+            </span>
         {% elif tx.emetteur_type == "societe" %}
             <strong>{{ tx.emetteur_raison_sociale or "" }}</strong>
         {% else %}
-            <span class="muted">(à extraire)</span>
+            <span class="muted">(a extraire)</span>
         {% endif %}
     {% endif %}
 </td>
+
+<script>
+function toggleEditEmetteur(txId) {
+    const display = document.getElementById('emetteur-display-' + txId);
+    const edit = document.getElementById('emetteur-edit-' + txId);
+    if (display.style.display === 'none') {
+        display.style.display = 'flex';
+        edit.style.display = 'none';
+    } else {
+        display.style.display = 'none';
+        edit.style.display = 'flex';
+    }
+}
+
+function saveEmetteur(txId) {
+    const prenomInput = document.getElementById('emetteur_prenom_' + txId);
+    const nomInput = document.getElementById('emetteur_nom_' + txId);
+
+    const formData = new FormData();
+    formData.append('emetteur_prenom', prenomInput.value);
+    formData.append('emetteur_nom', nomInput.value);
+
+    fetch('/transactions/' + txId + '/update-emetteur', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Erreur:', error));
+}
+</script>
 <td>
     {% if tx.est_virement_entrant %}
         <select class="inline-input"
