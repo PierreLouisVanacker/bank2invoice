@@ -25,49 +25,48 @@
 </div>
 
 <script>
-function startUpload() {
-    const overlay = document.getElementById('upload-overlay');
-    if (overlay) overlay.classList.add('show');
-
-    const input = document.getElementById('file-input');
-    const files = input.files;
-
-    if (files.length === 0) return;
-
-    uploadFiles(files, 0);
+function showOverlay(title, sub) {
+    document.getElementById('upload-overlay').classList.add('show');
+    if (title) document.getElementById('upload-overlay-title').textContent = title;
+    if (sub)   document.getElementById('upload-overlay-sub').textContent = sub;
 }
 
-function uploadFiles(files, index) {
+function startUpload() {
+    const input = document.getElementById('file-input');
+    const files = input.files;
+    if (files.length === 0) return;
+
+    const label = files.length > 1
+        ? 'Analyse du relevé 1 / ' + files.length + '...'
+        : 'Analyse du relevé en cours...';
+    showOverlay(label, 'Lecture du PDF, détection de la banque, extraction des transactions.');
+    uploadNext(files, 0);
+}
+
+async function uploadNext(files, index) {
     if (index >= files.length) {
-        // Tous les fichiers ont ete telecharges, redirection
-        setTimeout(() => location.href = '/releves', 500);
+        showOverlay('Terminé ! Redirection...', files.length + ' relevé(s) importé(s).');
+        setTimeout(() => location.href = '/releves', 400);
         return;
     }
 
-    const file = files[index];
-    const formData = new FormData();
-    formData.append('files', file);
-
-    // Affiche le decompte
-    const spinner = document.querySelector('.spinner');
-    if (spinner && spinner.parentElement) {
-        spinner.parentElement.textContent = 'Analyse du releve ' + (index + 1) + '/' + files.length + '... ';
-        spinner.parentElement.insertBefore(spinner, spinner.parentElement.firstChild);
+    if (files.length > 1) {
+        document.getElementById('upload-overlay-title').textContent =
+            'Analyse du relevé ' + (index + 1) + ' / ' + files.length + '...';
+        document.getElementById('upload-overlay-sub').textContent =
+            files[index].name;
     }
 
-    fetch('/releves/upload', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (response.ok) {
-            uploadFiles(files, index + 1);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
-        uploadFiles(files, index + 1);
-    });
+    const formData = new FormData();
+    formData.append('files', files[index]);
+
+    try {
+        await fetch('/releves/upload', { method: 'POST', body: formData, redirect: 'manual' });
+    } catch(e) {
+        // continue même en cas d'erreur réseau
+    }
+
+    uploadNext(files, index + 1);
 }
 
 (function() {
