@@ -65,7 +65,7 @@ def _build_context(
     """Construit le contexte LaTeX, avec échappement de toutes les valeurs
     dynamiques (nom client, désignation, etc.)."""
     assujetti = profil.assujetti_tva
-    tva_taux = profil.tva_taux_defaut if (assujetti and profil.tva_taux_defaut) else Decimal("0")
+    tva_taux = (profil.tva_taux_defaut or Decimal("20")) if assujetti else Decimal("0")
 
     # Le montant du relevé est TTC. On décompose :
     #   - assujetti : HT = TTC / (1 + taux/100), TVA = TTC - HT
@@ -227,8 +227,8 @@ def generer_facture(
 
     # Montants (franchise → HT = TTC, pas de TVA)
     assujetti = profil.assujetti_tva
-    if assujetti and profil.tva_taux_defaut:
-        taux = profil.tva_taux_defaut
+    if assujetti:
+        taux = profil.tva_taux_defaut or Decimal("20")
         montant_ht = (tx.montant / (1 + taux / 100)).quantize(Decimal("0.01"))
         tva_montant = tx.montant - montant_ht
         mention_tva = ""
