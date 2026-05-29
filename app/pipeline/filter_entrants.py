@@ -51,10 +51,12 @@ _EXCLUSION_PATTERNS = (
     ("caf ", "Remboursement CAF"),
     ("pole emploi", "Pôle Emploi"),
     ("impots", "Remboursement impôts"),
-    # CARPA : décision de Lorène — ce ne sont pas des honoraires à facturer
-    # (mouvements de fonds de tiers via la Caisse des Règlements Pécuniaires),
+    # CARPA / Caisse des Règlements Pécuniaires : décision de Lorène — ce ne
+    # sont pas des honoraires à facturer (mouvements de fonds de tiers),
     # donc exclus du périmètre de facturation.
     ("carpa", "CARPA — mouvement de fonds, non facturable (décision métier)"),
+    ("caisse des reglements", "Caisse des Règlements Pécuniaires — mouvement de fonds, non facturable (décision métier)"),
+    ("caisse des règlements", "Caisse des Règlements Pécuniaires — mouvement de fonds, non facturable (décision métier)"),
 )
 
 # ─── Cas spécifiques "à valider" (inclus mais demande validation humaine) ───
