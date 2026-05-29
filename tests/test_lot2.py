@@ -43,10 +43,11 @@ def test_filter_virement_societe_a_valider():
     assert d.review_status == "a_valider"
 
 
-def test_filter_carpa_a_valider():
+def test_filter_carpa_exclu():
+    # CARPA = mouvement de fonds de tiers, non facturable (décision métier)
     d = filter_transaction("Virement Carpa / 118071", "credit")
-    assert d.est_virement_entrant is True
-    assert d.review_status == "a_valider"
+    assert d.est_virement_entrant is False
+    assert d.review_status == "exclu"
     assert "CARPA" in d.raison
 
 

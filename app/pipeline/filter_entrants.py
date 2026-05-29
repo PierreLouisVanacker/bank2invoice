@@ -24,6 +24,7 @@ from dataclasses import dataclass
 # Insensible à la casse, on cherche en préfixe (le libellé commence par)
 
 _VIREMENT_PREFIXES = (
+    # ── Crédit Agricole ──────────────────────────────────────────────────────
     "virement vir inst de",
     "virement vir inst ",  # parfois pas de "de"
     "virement web ",       # virement web par tiers
@@ -31,6 +32,11 @@ _VIREMENT_PREFIXES = (
     "vir europeen",
     "vir recu",
     "virement ",           # fallback générique en dernier
+    # ── Société Générale ─────────────────────────────────────────────────────
+    # Les libellés SG sont fusionnés (sans espace entre type et référence)
+    "virrecu",             # VIR RECU (virement reçu)
+    "virinstre",           # VIR INST RE (virement instantané reçu)
+    "versementexpress",    # Versement en espèces (dépôt guichet/DAB)
 )
 
 # ─── Patterns d'exclusion forte (le libellé matche → exclu d'office) ────────
@@ -57,6 +63,8 @@ _EXCLUSION_PATTERNS = (
     ("carpa", "CARPA — mouvement de fonds, non facturable (décision métier)"),
     ("caisse des reglements", "Caisse des Règlements Pécuniaires — mouvement de fonds, non facturable (décision métier)"),
     ("caisse des règlements", "Caisse des Règlements Pécuniaires — mouvement de fonds, non facturable (décision métier)"),
+    # Variante SG : libellé fusionné sans espaces (pdfplumber retire les espaces)
+    ("caissedesreglements", "Caisse des Règlements Pécuniaires — mouvement de fonds, non facturable (décision métier)"),
 )
 
 # ─── Cas spécifiques "à valider" (inclus mais demande validation humaine) ───

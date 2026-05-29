@@ -28,7 +28,7 @@ from sqlmodel import Session, select
 
 from app.llm.base import LLMClient
 from app.models import Releve, Transaction
-from app.pipeline import parse_ca
+from app.pipeline import parse_ca, parse_sg
 from app.pipeline.detect_banque import detect_banque
 from app.pipeline.emetteur import extract_emetteur
 from app.pipeline.filter_entrants import filter_transaction
@@ -67,10 +67,10 @@ def _extract_full_text(pdf_path: Path) -> str:
         return "\n".join((p.extract_text() or "") for p in pdf.pages)
 
 
-# Registre des parsers par banque. Pour l'instant CA uniquement.
-# Tous renvoient un ParsedReleve.
+# Registre des parsers par banque. Tous renvoient un ParsedReleve.
 _PARSERS = {
     "CA": parse_ca.parse,
+    "SG": parse_sg.parse,
 }
 
 
@@ -135,7 +135,7 @@ def ingest_pdf(
             releve_id=releve.id,
             banque=banque,
             errors=[
-                f"Banque '{banque}' non supportée. Seul CA est implémenté."
+                f"Banque '{banque}' non supportée. Banques supportées : CA, SG."
                 if banque
                 else "Banque non identifiée dans le PDF."
             ],

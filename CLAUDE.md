@@ -4,8 +4,8 @@
 > (typiquement avec Claude Code). Tout ce qui compte est ici : produit, archi,
 > décisions, état d'avancement, pièges connus, et ce qui reste à faire.
 >
-> **Date du snapshot** : mai 2026 — fin du Lot 6
-> **Version code** : 0.6.0
+> **Date du snapshot** : mai 2026 — fin du Lot 7 (parser SG)
+> **Version code** : 0.7.0
 
 ---
 
@@ -179,7 +179,7 @@ PDF uploadé (UI ou CLI)
   │
   ├─→ hash SHA256 → idempotence (par user, hash)
   ├─→ pdfplumber.extract_text → detect_banque (CA|SG)
-  ├─→ parse_ca.parse() : extract_tables → ParsedReleve
+  ├─→ parse_ca.parse() ou parse_sg.parse() → ParsedReleve
   │     metadata (soldes, totaux, période) + transactions
   ├─→ validate() : sommes + soldes (sinon QUARANTAINE)
   ├─→ INSERT Releve
@@ -243,8 +243,9 @@ bank2invoice/
 │   │   ├── extract_pdf.py    (utilitaire générique positions x/y, peu utilisé)
 │   │   ├── detect_banque.py  marqueurs texte CA, SG
 │   │   ├── parse_ca.py       parser CA via extract_tables (déterministe)
+│   │   ├── parse_sg.py       parser SG text-based + matching séquentiel débit/crédit
 │   │   ├── validate.py       validations sommes/soldes
-│   │   ├── filter_entrants.py règles inclusion/exclusion (CARPA exclu)
+│   │   ├── filter_entrants.py règles inclusion/exclusion (CARPA exclu, préfixes CA+SG)
 │   │   ├── emetteur.py       preprocess regex + appel LLM
 │   │   ├── match_client.py   aliases + nom/raison_sociale
 │   │   ├── ingest.py         service d'ingestion idempotent (par user, hash)
@@ -309,19 +310,19 @@ bank2invoice/
 | 4 | Numérotation + génération PDF LaTeX + upload UI + registre | ✅ |
 | 5 | Créer client depuis review + date modifiable + profil éditable | ✅ |
 | 6 | TVA correcte + spinners + multi-users auth complet | ✅ (non testé en sandbox) |
+| 7 | Parser Société Générale (parse_sg.py) | ✅ |
 
 ---
 
 ## 7. Lots non encore traités
 
-Il existe aussi un Lot 7+ envisagé :
+Il existe aussi un Lot 8+ envisagé :
 - Factures d'avoir (annulation/correction conforme)
 - Multi-template (forfait/horaire/journalier) — pour l'instant un seul template
 - Export comptable (CSV pour comptable)
-- Parser Société Générale (SG) — détection prête, parser à écrire (devrait
-  réutiliser le code générique de parse_ca via extract_tables)
 - Upload multi-PDF en une fois
-- Tests pytest adaptés au multi-users (les tests Lot 2 cassent sans cookie)
+- Tests pytest adaptés au multi-users (les tests Lot 2 cassent sans cookie —
+  les 3 tests `test_match_par_*` échouent avec IntegrityError faute de user_id)
 
 ---
 
@@ -416,7 +417,43 @@ La CARPA (Caisse des Règlements Pécuniaires des Avocats) n'est PAS un
 client à facturer pour Lorène. Ce sont des mouvements de fonds de tiers.
 **Exclusion en dur** dans `filter_entrants.py`. Documenté.
 
-### 8.13. SESSION_SECRET obligatoire
+### 8.13. Particularités du parser SG (parse_sg.py)
+
+Le format SG est radicalement différent du CA :
+
+**Structure table** : toutes les transactions d'une page sont packées dans
+**une seule ligne de table** (vs une ligne par transaction pour CA). Les colonnes
+débit (col 3) et crédit (col 4) contiennent des montants séparés par `\n`.
+
+**Séparateur milliers** : SG utilise le point (`1.311,00`) — CA utilise l'espace
+(`1 311,20`). La fonction `_parse_montant` de parse_sg retire les `.` avant de
+convertir (ne pas réutiliser celle de parse_ca).
+
+**Détection débit/crédit** : matching séquentiel — on extrait le dernier montant
+de chaque ligne de transaction depuis le texte, puis on le compare au front de
+`debit_q` puis `credit_q` (listes ordonnées issues de la table). Cela exploite
+le fait que table et texte parcourent les transactions dans le même ordre.
+
+**Cas REGULVERST** : `REGULVERST07/02/25 1000,00 20,00` — les `1000,00` sont
+intégrés dans le libellé (montant régularisé), le vrai montant est `20,00` (le
+dernier). La regex `(?<!\d)\d{1,3}(?:\.\d{3})*,\d{2}\*?(?!\d)` avec lookbehind
+négatif extrait correctement `20,00` uniquement, car `1000,00` a 4 chiffres sans
+séparateur de milliers → ne matche pas `\d{1,3}`.
+
+**PDFs multi-mois avec doublons** : un fichier SG peut contenir plusieurs mois
+ET des copies dupliquées (copie client + copie banque). parse_sg détecte les
+doublons via le marqueur `Page 1/N` dans l'en-tête combiné à la période
+`du…au…`. Chaque période n'est parsée qu'une fois. La validation agrège les
+totaux de tous les mois (solde_initial = ouverture du plus ancien mois,
+solde_final = clôture du plus récent).
+
+**Préfixes virement SG** : dans les libellés SG, les mots sont fusionnés sans
+espace (`VIRRECU3499075591S`, pas `VIR RECU 3499075591S`). filter_entrants.py
+a été mis à jour avec les préfixes `virrecu`, `virinstre`, `versementexpress`.
+Le pattern CARPA ajoute `caissedesreglements` (sans espaces) pour matcher le
+format SG.
+
+### 8.14. SESSION_SECRET obligatoire
 
 Si vide ou < 16 caractères → `RuntimeError` au premier login. Générer avec :
 ```bash
@@ -516,7 +553,6 @@ pytest -v
   "vers compte joint", "vers compte epargne" en dur dans `filter_entrants.py`
 - **Adresse obligatoire sur facture** : recommandée, non bloquante
 - **Multi-template** : MVP = template forfait uniquement (celui de Lorène)
-- **Parser Société Générale** : non implémenté, détection seule
 
 ---
 
@@ -539,14 +575,21 @@ pytest -v
 
 ### Pour ajouter une banque
 
-> Le parser CA est dans `app/pipeline/parse_ca.py`, utilise
-> `pdfplumber.extract_tables()` et reconnaît les colonnes par leur nom dans
-> l'en-tête. Pour ajouter une banque :
+Deux parsers existent en référence :
+- **parse_ca.py** : tables bien structurées, une ligne par transaction, colonnes
+  nommées → approche `extract_tables` + matching par nom de colonne
+- **parse_sg.py** : transactions packées dans une seule ligne de table, pas de
+  colonnes nommées → approche text-based + matching séquentiel débit/crédit
+
+Pour une nouvelle banque :
 > 1. Ajouter ses marqueurs dans `app/pipeline/detect_banque.py`
-> 2. Créer `app/pipeline/parse_XX.py` (modeler sur parse_ca)
-> 3. Adapter `_HEADER_PATTERNS` aux noms de colonnes de cette banque
-> 4. Enregistrer dans `_PARSERS` de `app/pipeline/ingest.py`
-> 5. Tester avec un PDF réel + validations
+> 2. Créer `app/pipeline/parse_XX.py` en renvoyant un `ParsedReleve`
+>    (importé depuis `parse_ca` — type partagé)
+> 3. Enregistrer dans `_PARSERS` de `app/pipeline/ingest.py`
+> 4. Ajouter ses préfixes de virement dans `filter_entrants.py`
+> 5. Tester sur un PDF réel : `parse_XX.parse(pdf)` + `validate(result)` doit
+>    passer avec 0 erreur et 0 warning
+> 6. Vérifier que `detect_banque` identifie correctement le PDF avant d'ingérer
 
 ### Pour ajouter un template de facture
 
@@ -562,7 +605,9 @@ pytest -v
 ## 14. Récap décisions métier importantes
 
 - **Lorène est avocate, mode forfait, Crédit Agricole**
-- **CARPA = exclu** (mouvement de fonds, pas honoraires)
+- **Dilawar BALLAL (Paris 16 ESPACE PRO) utilise Société Générale** — second utilisateur
+  identifié sur le PDF "Releves 01.25 - BD - complet.pdf" (Jan–Jul 2025)
+- **CARPA = exclu** (mouvement de fonds, pas honoraires) — valable CA et SG
 - **Montant relevé = TTC** (1000 sur le relevé → 833,33 HT + 166,67 TVA)
 - **Statut TVA figé par facture** (pas suiveur du profil après émission)
 - **Factures = append-only**, corrections par avoir
@@ -578,6 +623,12 @@ pytest -v
   `facture_header.tex`, `facture_footer.tex`, `main.tex` (à demander à
   l'utilisateur si besoin)
 - **PDF de test CA** : `data/pdfs/user_X/releve_ca_2026_01.pdf` (gitignoré)
+- **PDF de test SG** : `Releves 01.25 - BD - complet.pdf` à la racine du projet
+  (gitignoré — contient Jan–Jul 2025, 21 pages dont doublons mars et mai)
 - **Tests qui valident le parsing CA** : `tests/test_parse_ca.py` — 16 tests,
   prouvent l'extraction correcte sur le relevé janvier 2026 (26 transactions,
   validations sommes/soldes au centime près)
+- **Validation parser SG** : exécuter `python -c "from app.pipeline import parse_sg,
+  validate; r=parse_sg.parse('Releves 01.25 - BD - complet.pdf');
+  v=validate.validate(r); print(v.ok, len(r.transactions))"` → doit afficher
+  `True 111`
