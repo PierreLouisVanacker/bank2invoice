@@ -1,9 +1,9 @@
 <div class="card">
-    <h3 style="margin-top: 0;">Résultat de la génération</h3>
+    <h3 style="margin-top: 0;">Resultat de la generation</h3>
 
     {% if created %}
     <p style="color: var(--green);">
-        ✓ {{ created|length }} facture(s) générée(s) :
+        [OK] {{ created|length }} facture(s) generee(s) :
     </p>
     <ul>
         {% for r in created %}
@@ -24,7 +24,7 @@
 
     {% if errors %}
     <p style="color: var(--red);">
-        ✗ {{ errors|length }} erreur(s) :
+        [ERR] {{ errors|length }} erreur(s) :
     </p>
     <ul>
         {% for r in errors %}

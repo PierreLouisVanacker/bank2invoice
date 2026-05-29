@@ -110,27 +110,17 @@ def view_releve(
 @router.post("/upload")
 async def upload_releve(
     request: Request,
-    file: UploadFile = File(...),
+    files: list[UploadFile] = File(...),
     user: User = Depends(current_user),
     session: Session = Depends(get_session),
 ):
-    """Reçoit un PDF, le sauvegarde, l'ingère pour le user connecté."""
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Le fichier doit être un PDF.")
+    """Reçoit un ou plusieurs PDFs, les sauvegarde, les ingère pour le user connecté."""
+    if not files:
+        raise HTTPException(status_code=400, detail="Aucun fichier selectionne")
 
-    # Sauvegarde dans data/pdfs/<user_id>/ pour isoler les fichiers par user
     settings.ensure_dirs()
     user_pdfs = Path(settings.pdfs_dir) / f"user_{user.id}"
     user_pdfs.mkdir(parents=True, exist_ok=True)
-    dest = user_pdfs / file.filename
-    counter = 1
-    while dest.exists():
-        stem = Path(file.filename).stem
-        dest = user_pdfs / f"{stem}_{counter}.pdf"
-        counter += 1
-
-    with open(dest, "wb") as f:
-        shutil.copyfileobj(file.file, f)
 
     llm = None
     try:
@@ -138,7 +128,22 @@ async def upload_releve(
     except Exception:
         llm = None
 
-    ingest_pdf(dest, session, user_id=user.id, llm=llm)
+    for file in files:
+        if not file.filename or not file.filename.lower().endswith(".pdf"):
+            continue
+
+        dest = user_pdfs / file.filename
+        counter = 1
+        while dest.exists():
+            stem = Path(file.filename).stem
+            dest = user_pdfs / f"{stem}_{counter}.pdf"
+            counter += 1
+
+        with open(dest, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        ingest_pdf(dest, session, user_id=user.id, llm=llm)
+
     return RedirectResponse(url="/releves", status_code=303)
 
 
