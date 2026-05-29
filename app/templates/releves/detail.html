@@ -28,6 +28,31 @@
     </label>
 </div>
 
+<div class="toolbar">
+    <button class="secondary" onclick="selectAllTransactions()" style="margin-right: 8px; font-size: 0.9rem;">
+        Tout selectionner
+    </button>
+    <button class="secondary" onclick="deselectAllTransactions()" style="margin-right: 8px; font-size: 0.9rem;">
+        Tout deselectionner
+    </button>
+</div>
+
+<script>
+function selectAllTransactions() {
+    document.querySelectorAll('input[name="inclus"]:not(:checked)').forEach(cb => {
+        cb.checked = true;
+        cb.dispatchEvent(new Event('change'));
+    });
+}
+
+function deselectAllTransactions() {
+    document.querySelectorAll('input[name="inclus"]:checked').forEach(cb => {
+        cb.checked = false;
+        cb.dispatchEvent(new Event('change'));
+    });
+}
+</script>
+
 <style>
     /* Par défaut on cache les non-entrants */
     body:not(.show-all-tx) tr.tx-non-entrant { display: none; }

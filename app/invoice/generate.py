@@ -92,7 +92,7 @@ def _build_context(
 
     return {
         # Header
-        "tva_taux": str(tva_taux),
+        "tva_taux": f"{tva_taux:.0f}" if tva_taux else "0",
         "facture_date_fr": _date_fr(date_facture),
         "assujetti_tva": assujetti,
         # Montants pré-calculés (le template n'a plus à recalculer)
