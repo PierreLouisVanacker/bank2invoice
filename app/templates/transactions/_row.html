@@ -67,9 +67,59 @@
                 </button>
             </span>
         {% elif tx.emetteur_type == "societe" %}
-            <strong>{{ tx.emetteur_raison_sociale or "" }}</strong>
+            <span id="emetteur-display-{{ tx.id }}" style="display: flex; gap: 8px; align-items: center;">
+                <strong>{{ tx.emetteur_raison_sociale or "" }}</strong>
+                <button class="secondary" type="button"
+                        style="font-size: 0.75rem; padding: 2px 6px;"
+                        onclick="toggleEditEmetteur({{ tx.id }})">
+                    Editer
+                </button>
+            </span>
+            <span id="emetteur-edit-{{ tx.id }}" style="display: none; gap: 4px; align-items: center;">
+                <input type="text" class="inline-input" placeholder="Raison sociale"
+                       id="emetteur_raison_sociale_{{ tx.id }}" value="{{ tx.emetteur_raison_sociale or '' }}"
+                       style="width: 150px; font-size: 0.85rem;">
+                <button class="secondary" type="button"
+                        style="font-size: 0.75rem; padding: 2px 6px;"
+                        onclick="saveEmetteur({{ tx.id }})">
+                    OK
+                </button>
+                <button class="secondary" type="button"
+                        style="font-size: 0.75rem; padding: 2px 6px;"
+                        onclick="toggleEditEmetteur({{ tx.id }})">
+                    Annuler
+                </button>
+            </span>
         {% else %}
-            <span class="muted">(a extraire)</span>
+            <span id="emetteur-display-{{ tx.id }}" style="display: flex; gap: 8px; align-items: center;">
+                <span class="muted">(à extraire)</span>
+                <button class="secondary" type="button"
+                        style="font-size: 0.75rem; padding: 2px 6px;"
+                        onclick="toggleEditEmetteur({{ tx.id }})">
+                    Éditer
+                </button>
+            </span>
+            <span id="emetteur-edit-{{ tx.id }}" style="display: none; gap: 4px; align-items: center;">
+                <input type="text" class="inline-input" placeholder="Prenom"
+                       id="emetteur_prenom_{{ tx.id }}" value="{{ tx.emetteur_prenom or '' }}"
+                       style="width: 80px; font-size: 0.85rem;">
+                <input type="text" class="inline-input" placeholder="Nom"
+                       id="emetteur_nom_{{ tx.id }}" value="{{ tx.emetteur_nom or '' }}"
+                       style="width: 100px; font-size: 0.85rem;">
+                <input type="text" class="inline-input" placeholder="Raison sociale"
+                       id="emetteur_raison_sociale_{{ tx.id }}" value="{{ tx.emetteur_raison_sociale or '' }}"
+                       style="width: 120px; font-size: 0.85rem;">
+                <button class="secondary" type="button"
+                        style="font-size: 0.75rem; padding: 2px 6px;"
+                        onclick="saveEmetteur({{ tx.id }})">
+                    OK
+                </button>
+                <button class="secondary" type="button"
+                        style="font-size: 0.75rem; padding: 2px 6px;"
+                        onclick="toggleEditEmetteur({{ tx.id }})">
+                    Annuler
+                </button>
+            </span>
         {% endif %}
     {% endif %}
 </td>
@@ -88,21 +138,25 @@ function toggleEditEmetteur(txId) {
 }
 
 function saveEmetteur(txId) {
+    const formData = new FormData();
+
     const prenomInput = document.getElementById('emetteur_prenom_' + txId);
     const nomInput = document.getElementById('emetteur_nom_' + txId);
+    const raisonSocialeInput = document.getElementById('emetteur_raison_sociale_' + txId);
 
-    const formData = new FormData();
-    formData.append('emetteur_prenom', prenomInput.value);
-    formData.append('emetteur_nom', nomInput.value);
+    if (prenomInput) formData.append('emetteur_prenom', prenomInput.value);
+    if (nomInput) formData.append('emetteur_nom', nomInput.value);
+    if (raisonSocialeInput) formData.append('emetteur_raison_sociale', raisonSocialeInput.value);
 
-    fetch('/transactions/' + txId + '/update-emetteur', {
+    fetch('/transactions/' + txId + '/details', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
+    .then(response => response.text())
+    .then(html => {
+        const rowElement = document.getElementById('tx-row-' + txId);
+        if (rowElement) {
+            rowElement.innerHTML = html;
         }
     })
     .catch(error => console.error('Erreur:', error));
