@@ -26,15 +26,53 @@
 
 <script>
 function startUpload() {
-    // Affiche l'overlay puis soumet le formulaire
     const overlay = document.getElementById('upload-overlay');
     if (overlay) overlay.classList.add('show');
-    document.getElementById('upload-form').submit();
+
+    const input = document.getElementById('file-input');
+    const files = input.files;
+
+    if (files.length === 0) return;
+
+    uploadFiles(files, 0);
 }
+
+function uploadFiles(files, index) {
+    if (index >= files.length) {
+        // Tous les fichiers ont ete telecharges, redirection
+        setTimeout(() => location.href = '/releves', 500);
+        return;
+    }
+
+    const file = files[index];
+    const formData = new FormData();
+    formData.append('files', file);
+
+    // Affiche le decompte
+    const spinner = document.querySelector('.spinner');
+    if (spinner && spinner.parentElement) {
+        spinner.parentElement.textContent = 'Analyse du releve ' + (index + 1) + '/' + files.length + '... ';
+        spinner.parentElement.insertBefore(spinner, spinner.parentElement.firstChild);
+    }
+
+    fetch('/releves/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            uploadFiles(files, index + 1);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        uploadFiles(files, index + 1);
+    });
+}
+
 (function() {
     const dz = document.getElementById('dropzone');
     const input = document.getElementById('file-input');
-    const form = document.getElementById('upload-form');
     if (!dz) return;
 
     ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => {
