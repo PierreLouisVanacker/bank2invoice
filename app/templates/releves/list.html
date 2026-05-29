@@ -71,7 +71,7 @@ function startUpload() {
             <th>Statut</th>
             <th class="num">Transactions</th>
             <th class="num">Entrants candidats</th>
-            <th></th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -88,10 +88,18 @@ function startUpload() {
             <td><span class="badge {{ r.statut }}">{{ r.statut }}</span></td>
             <td class="num">{{ stats[r.id].total }}</td>
             <td class="num">{{ stats[r.id].entrants }}</td>
-            <td>
+            <td style="display: flex; gap: 8px;">
                 {% if r.statut == "parse" %}
-                    <a href="/releves/{{ r.id }}">Review →</a>
+                    <a href="/releves/{{ r.id }}">Review</a>
                 {% endif %}
+                <button class="danger"
+                        style="padding: 4px 8px; font-size: 0.9rem;"
+                        hx-delete="/releves/{{ r.id }}"
+                        hx-target="closest tr"
+                        hx-swap="outerHTML swap:500ms"
+                        hx-confirm="Supprimer le releve « {{ r.nom_fichier }} » et toutes ses transactions ? Cette action est irreversible.">
+                    Supprimer
+                </button>
             </td>
         </tr>
         {% endfor %}

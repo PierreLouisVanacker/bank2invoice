@@ -1,9 +1,9 @@
 """Commandes CLI.
 
 Usage :
-    python -m app.cli seed       # crée les tables + migrations légères
+    python -m app.cli seed       # cree les tables + migrations legeres
     python -m app.cli reset      # DESTRUCTIF : supprime la base et la recrée
-    python -m app.cli adduser    # crée un user en mode interactif
+    python -m app.cli adduser    # cree un user en mode interactif
 """
 
 import sys
@@ -16,40 +16,40 @@ from app.models import ProfilUtilisateur, User
 
 
 def seed() -> None:
-    """Initialise la base. Avec multi-utilisateurs, plus de profil par défaut :
+    """Initialise la base. Avec multi-utilisateurs, plus de profil par defaut :
     chaque user s'inscrit via /register."""
-    print("→ Initialisation de la base…")
+    print("=> Initialisation de la base...")
     init_db()
     print(f"  DB : {settings.database_url}")
     print()
-    print("✓ Base prête. Pour créer un compte :")
-    print("  - via l'UI : démarre l'app (uvicorn app.main:app --reload) et va sur /register")
+    print("[OK] Base prete. Pour creer un compte :")
+    print("  - via l'UI : demarre l'app (uvicorn app.main:app --reload) et va sur /register")
     print("  - via CLI : python -m app.cli adduser")
 
 
 def adduser() -> None:
-    """Crée un user en interactif (utile pour les tests)."""
+    """Cree un user en interactif (utile pour les tests)."""
     import getpass
     from app.auth.passwords import hash_password
 
     init_db()
 
-    print("Création d'un nouvel utilisateur :")
+    print("Creation d'un nouvel utilisateur :")
     email = input("  Email : ").strip().lower()
     nom = input("  Nom d'affichage : ").strip()
-    pwd = getpass.getpass("  Mot de passe (≥ 8 char) : ")
+    pwd = getpass.getpass("  Mot de passe (8+ char) : ")
     if len(pwd) < 8:
-        print("✗ Mot de passe trop court.")
+        print("[ERR] Mot de passe trop court.")
         sys.exit(1)
     pwd2 = getpass.getpass("  Confirmer : ")
     if pwd != pwd2:
-        print("✗ Les mots de passe diffèrent.")
+        print("[ERR] Les mots de passe different.")
         sys.exit(1)
 
     with Session(engine) as session:
         from sqlmodel import select
         if session.exec(select(User).where(User.email == email)).first():
-            print("✗ Un compte existe déjà avec cet email.")
+            print("[ERR] Un compte existe deja avec cet email.")
             sys.exit(1)
 
         user = User(email=email, password_hash=hash_password(pwd), nom_affichage=nom)
@@ -70,8 +70,8 @@ def adduser() -> None:
         )
         session.add(profil)
         session.commit()
-        print(f"✓ User créé : id={user.id}, email={email}")
-        print("  Configure ton profil sur /profil après login.")
+        print(f"[OK] User cree : id={user.id}, email={email}")
+        print("  Configure ton profil sur /profil apres login.")
 
 
 def reset() -> None:
@@ -79,7 +79,7 @@ def reset() -> None:
     from pathlib import Path
     db_path = Path(settings.database_url.replace("sqlite:///", ""))
     if db_path.exists():
-        print(f"→ Suppression de {db_path}")
+        print(f"=> Suppression de {db_path}")
         db_path.unlink()
     journal = db_path.with_suffix(db_path.suffix + "-journal")
     if journal.exists():

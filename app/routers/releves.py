@@ -18,7 +18,7 @@ from app.auth.deps import current_user
 from app.config import settings
 from app.db import get_session
 from app.llm.factory import get_llm_client
-from app.models import Client, Releve, Transaction, User
+from app.models import Client, Releve, Transaction, User, Facture
 from app.pipeline.ingest import ingest_pdf
 
 router = APIRouter(prefix="/releves", tags=["releves"])
@@ -140,3 +140,32 @@ async def upload_releve(
 
     ingest_pdf(dest, session, user_id=user.id, llm=llm)
     return RedirectResponse(url="/releves", status_code=303)
+
+
+@router.delete("/{releve_id}", response_class=HTMLResponse)
+def delete_releve(
+    releve_id: int,
+    request: Request,
+    user: User = Depends(current_user),
+    session: Session = Depends(get_session),
+) -> HTMLResponse:
+    """Supprime un relevé et toutes ses transactions, sauf si des factures
+    sont générées (contrainte d'intégrité comptable)."""
+    releve = _get_releve_for(releve_id, user, session)
+
+    txs = session.exec(
+        select(Transaction).where(Transaction.releve_id == releve_id)
+    ).all()
+
+    if any(tx.facture_id is not None for tx in txs):
+        return HTMLResponse(
+            '<tr class="error"><td colspan="5">Suppression impossible : ce relevé a des factures générées.</td></tr>',
+            status_code=422,
+        )
+
+    for tx in txs:
+        session.delete(tx)
+    session.delete(releve)
+    session.commit()
+
+    return HTMLResponse("")
