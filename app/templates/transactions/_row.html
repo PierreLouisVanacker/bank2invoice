@@ -15,9 +15,9 @@
 <td>{{ tx.date.strftime("%d/%m/%Y") }}</td>
 <td class="num">
     {% if tx.sens == "debit" %}
-        <span style="color: var(--red);">−{{ tx.montant }}</span>
+        <span style="color: var(--red);">−{{ "%.2f" % tx.montant }}</span>
     {% else %}
-        <span style="color: var(--green);">+{{ tx.montant }}</span>
+        <span style="color: var(--green);">+{{ "%.2f" % tx.montant }}</span>
     {% endif %}
 </td>
 <td>

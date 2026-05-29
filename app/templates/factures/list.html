@@ -53,7 +53,7 @@
                     {% if c.type == "personne" %}{{ c.prenom or "" }} {{ c.nom }}{% else %}{{ c.raison_sociale or c.nom }}{% endif %}
                 {% else %}#{{ f.client_id }}{% endif %}
             </td>
-            <td class="num">{{ f.montant_ttc }} €</td>
+            <td class="num">{{ "%.2f" % f.montant_ttc }} €</td>
             <td>
                 {% if f.tva_taux and f.tva_taux > 0 %}
                     {{ f.tva_taux }}%

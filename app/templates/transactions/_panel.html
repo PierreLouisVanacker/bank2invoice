@@ -10,7 +10,7 @@
 
         <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
             <strong>Date :</strong> {{ tx.date.strftime("%d/%m/%Y") }}<br>
-            <strong>Montant :</strong> {{ tx.montant }} € ({{ tx.sens }})<br>
+            <strong>Montant :</strong> {{ "%.2f" % tx.montant }} € ({{ tx.sens }})<br>
             <strong>Libellé brut :</strong>
             <div style="font-family: ui-monospace, monospace; background: var(--bg); padding: 8px; border-radius: 4px; margin-top: 4px; word-break: break-word;">
                 {{ tx.libelle_brut }}
