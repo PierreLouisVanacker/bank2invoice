@@ -1,0 +1,31 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+
+# Données sensibles : on ne commit jamais les PDFs ou la DB
+data/db.sqlite
+data/db.sqlite-journal
+data/pdfs/*
+data/factures/*
+!data/pdfs/.gitkeep
+!data/factures/.gitkeep
+
+# Artefacts LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# IDE
+.vscode/
+.idea/
+data/parsed/

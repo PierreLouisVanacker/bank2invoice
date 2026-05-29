@@ -1,0 +1,46 @@
+% Template Jinja2 (delimiters VAR et BLOCK)
+% Variables attendues : tva_taux, montant_ht, montant_tva, montant_ttc, assujetti_tva
+\documentclass[french,11pt]{article}
+\usepackage{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage[a4paper]{geometry}
+\usepackage{units}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{ifthen}
+
+\def\TVA{\VAR{tva_taux}}
+
+\renewcommand{\today}{\VAR{facture_date_fr}}
+
+% Les montants sont pré-calculés côté Python et passés en variables.
+% \AjouterLigne accumule juste les lignes de prestations à afficher.
+\newcommand{\AjouterLigne}[2]{% Arguments : Désignation, Montant
+    \eaddto\ListeProduits{#1   & & & #2   \cr}
+}
+
+\newcommand{\AfficheResultat}{%
+    \ListeProduits
+
+    \cr \hline
+    \BLOCK{ if assujetti_tva }
+    Total HT            & & &   \VAR{montant_ht}    \cr
+    TVA \TVA~\%         & & &   \VAR{montant_tva}   \cr
+    \hline \hline
+    \textbf{Total TTC}  & & &   \VAR{montant_ttc}   \cr
+    \BLOCK{ else }
+    \textbf{Total}      & & &   \VAR{montant_ttc}   \cr
+    \BLOCK{ endif }
+
+}
+
+\newcommand*\eaddto[2]{% version développée de \addto
+   \edef\tmp{#2}%
+   \expandafter\addto
+   \expandafter#1%
+   \expandafter{\tmp}%
+}
+
+\newcommand{\ListeProduits}{}

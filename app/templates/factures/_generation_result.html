@@ -1,0 +1,48 @@
+<div class="card">
+    <h3 style="margin-top: 0;">Résultat de la génération</h3>
+
+    {% if created %}
+    <p style="color: var(--green);">
+        ✓ {{ created|length }} facture(s) générée(s) :
+    </p>
+    <ul>
+        {% for r in created %}
+        <li>
+            <strong>{{ r.numero }}</strong> —
+            <a href="/factures" target="_blank">voir le registre</a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if skipped %}
+    <p class="muted">
+        = {{ skipped|length }} déjà générée(s) (ignorée(s)) :
+        {% for r in skipped %}{{ r.numero }}{% if not loop.last %}, {% endif %}{% endfor %}
+    </p>
+    {% endif %}
+
+    {% if errors %}
+    <p style="color: var(--red);">
+        ✗ {{ errors|length }} erreur(s) :
+    </p>
+    <ul>
+        {% for r in errors %}
+        <li style="color: var(--red);">
+            Transaction #{{ r.transaction_id }} :
+            {% for e in r.errors %}{{ e }}{% if not loop.last %} ; {% endif %}{% endfor %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if not created and not skipped and not errors %}
+    <p class="muted">Aucune transaction à générer (rien de coché ?).</p>
+    {% endif %}
+
+    {% if created %}
+    <p style="margin-top: 16px;">
+        <a href="/factures">→ Aller au registre des factures</a>
+    </p>
+    {% endif %}
+</div>

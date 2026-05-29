@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Clients — bank2invoice{% endblock %}
+
+{% block content %}
+<h1>Clients</h1>
+<p class="muted">
+    Les fiches client sont utilisées pour matcher les virements entrants et
+    générer les factures (Lot 4). L'adresse est nécessaire pour des factures
+    légalement conformes.
+</p>
+
+<div class="toolbar">
+    <button hx-get="/clients/new"
+            hx-target="#panel-slot"
+            hx-swap="innerHTML">
+        + Nouveau client
+    </button>
+    <span class="stat"><strong>{{ clients|length }}</strong> client(s)</span>
+</div>
+
+{% if not clients %}
+<div class="card">
+    <p>Aucun client pour l'instant. Crée-en un pour commencer.</p>
+</div>
+{% else %}
+<table class="data">
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Nom / Raison sociale</th>
+            <th>Prénom</th>
+            <th>Adresse</th>
+            <th>Email</th>
+            <th>Aliases</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in clients %}
+        <tr>
+            <td>
+                {% if c.type == "personne" %}
+                    <span class="badge assujetti">Personne</span>
+                {% else %}
+                    <span class="badge auto_ok">Société</span>
+                {% endif %}
+            </td>
+            <td><strong>{{ c.nom if c.type == "personne" else (c.raison_sociale or c.nom) }}</strong></td>
+            <td>{{ c.prenom or "—" }}</td>
+            <td>
+                {% if c.adresse %}
+                    <div style="font-size: 0.85rem;">
+                        {{ c.adresse }}<br>
+                        {{ c.code_postal or "" }} {{ c.ville or "" }}
+                    </div>
+                {% else %}
+                    <span class="muted">⚠ Manquante</span>
+                {% endif %}
+            </td>
+            <td>{{ c.email or "—" }}</td>
+            <td>
+                <span class="muted">{{ aliases_count[c.id] }} alias{% if aliases_count[c.id] > 1 %}es{% endif %}</span>
+            </td>
+            <td>
+                <button class="secondary"
+                        hx-get="/clients/{{ c.id }}/edit"
+                        hx-target="#panel-slot"
+                        hx-swap="innerHTML"
+                        style="font-size: 0.8rem; padding: 3px 8px;">
+                    Éditer
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

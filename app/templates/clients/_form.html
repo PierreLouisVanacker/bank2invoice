@@ -1,0 +1,101 @@
+<div class="panel-overlay"
+     onclick="if(event.target === this) document.getElementById('panel-slot').innerHTML = ''">
+    <div class="panel">
+        <div class="panel-header">
+            <h2>
+                {% if client %}Éditer le client #{{ client.id }}{% else %}Nouveau client{% endif %}
+            </h2>
+            <button class="panel-close"
+                    onclick="document.getElementById('panel-slot').innerHTML = ''"
+                    aria-label="Fermer">×</button>
+        </div>
+
+        <form {% if client %}
+              hx-post="/clients/{{ client.id }}/edit"
+              {% else %}
+              hx-post="/clients/new"
+              {% endif %}
+              hx-target="body"
+              hx-swap="outerHTML"
+              hx-on::after-request="if(event.detail.successful) document.getElementById('panel-slot').innerHTML = ''">
+
+            <div class="form-row">
+                <label for="type">Type</label>
+                <select name="type" id="type" required>
+                    <option value="personne" {% if client and client.type == "personne" %}selected{% endif %}>Personne</option>
+                    <option value="societe" {% if client and client.type == "societe" %}selected{% endif %}>Société</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="nom">Nom *</label>
+                <input type="text" name="nom" id="nom" required
+                       value="{{ client.nom if client else '' }}">
+            </div>
+
+            <div class="form-row">
+                <label for="prenom">Prénom</label>
+                <input type="text" name="prenom" id="prenom"
+                       value="{{ client.prenom if client else '' }}"
+                       placeholder="(personne uniquement)">
+            </div>
+
+            <div class="form-row">
+                <label for="raison_sociale">Raison sociale</label>
+                <input type="text" name="raison_sociale" id="raison_sociale"
+                       value="{{ client.raison_sociale if client else '' }}"
+                       placeholder="(société uniquement)">
+            </div>
+
+            <h3 style="font-size: 0.95rem; color: var(--muted); margin: 20px 0 12px;">Adresse</h3>
+
+            <div class="form-row">
+                <label for="adresse">Adresse</label>
+                <input type="text" name="adresse" id="adresse"
+                       value="{{ client.adresse if client else '' }}">
+            </div>
+
+            <div class="form-row">
+                <label for="code_postal">Code postal</label>
+                <input type="text" name="code_postal" id="code_postal"
+                       value="{{ client.code_postal if client else '' }}">
+            </div>
+
+            <div class="form-row">
+                <label for="ville">Ville</label>
+                <input type="text" name="ville" id="ville"
+                       value="{{ client.ville if client else '' }}">
+            </div>
+
+            <h3 style="font-size: 0.95rem; color: var(--muted); margin: 20px 0 12px;">Contact</h3>
+
+            <div class="form-row">
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email"
+                       value="{{ client.email if client else '' }}">
+            </div>
+
+            <div class="form-row">
+                <label for="siret">SIRET</label>
+                <input type="text" name="siret" id="siret"
+                       value="{{ client.siret if client else '' }}"
+                       placeholder="(société uniquement)">
+            </div>
+
+            <div class="form-row">
+                <label for="notes">Notes</label>
+                <textarea name="notes" id="notes">{{ client.notes if client else '' }}</textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="secondary"
+                        onclick="document.getElementById('panel-slot').innerHTML = ''">
+                    Annuler
+                </button>
+                <button type="submit">
+                    {% if client %}Enregistrer{% else %}Créer{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

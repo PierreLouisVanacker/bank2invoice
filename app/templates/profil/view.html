@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Profil — bank2invoice{% endblock %}
+
+{% block content %}
+<h1>Profil utilisateur</h1>
+<p class="muted">
+    Ces informations apparaissent sur toutes les factures générées.
+    Modifier le profil n'affecte pas les factures déjà émises.
+</p>
+
+<form action="/profil" method="post">
+<div class="card">
+    <h2 style="margin-top: 0; border: 0; padding: 0;">Identité</h2>
+
+    <div class="form-row">
+        <label for="nom">Nom commercial *</label>
+        <input type="text" name="nom" id="nom" required value="{{ profil.nom }}">
+    </div>
+    <div class="form-row">
+        <label for="nom_complet">Nom complet *</label>
+        <input type="text" name="nom_complet" id="nom_complet" required value="{{ profil.nom_complet }}">
+    </div>
+    <div class="form-row">
+        <label for="adresse">Adresse *</label>
+        <input type="text" name="adresse" id="adresse" required value="{{ profil.adresse }}">
+    </div>
+    <div class="form-row">
+        <label for="code_postal">Code postal *</label>
+        <input type="text" name="code_postal" id="code_postal" required value="{{ profil.code_postal }}">
+    </div>
+    <div class="form-row">
+        <label for="ville">Ville *</label>
+        <input type="text" name="ville" id="ville" required value="{{ profil.ville }}">
+    </div>
+    <div class="form-row">
+        <label for="pays">Pays</label>
+        <input type="text" name="pays" id="pays" value="{{ profil.pays }}">
+    </div>
+    <div class="form-row">
+        <label for="siret">SIREN/SIRET *</label>
+        <input type="text" name="siret" id="siret" required value="{{ profil.siret }}">
+    </div>
+    <div class="form-row">
+        <label for="numero_tva">N° TVA intracom.</label>
+        <input type="text" name="numero_tva" id="numero_tva" value="{{ profil.numero_tva or '' }}">
+    </div>
+    <div class="form-row">
+        <label for="email">Email *</label>
+        <input type="email" name="email" id="email" required value="{{ profil.email }}">
+    </div>
+    <div class="form-row">
+        <label for="telephone">Téléphone</label>
+        <input type="text" name="telephone" id="telephone" value="{{ profil.telephone or '' }}">
+    </div>
+
+    <h2>Coordonnées bancaires</h2>
+    <div class="form-row">
+        <label for="iban">IBAN *</label>
+        <input type="text" name="iban" id="iban" required value="{{ profil.iban }}">
+    </div>
+    <div class="form-row">
+        <label for="bic">BIC *</label>
+        <input type="text" name="bic" id="bic" required value="{{ profil.bic }}">
+    </div>
+    <div class="form-row">
+        <label for="code_banque">Code banque</label>
+        <input type="text" name="code_banque" id="code_banque" value="{{ profil.code_banque or '' }}">
+    </div>
+    <div class="form-row">
+        <label for="code_guichet">Code guichet</label>
+        <input type="text" name="code_guichet" id="code_guichet" value="{{ profil.code_guichet or '' }}">
+    </div>
+    <div class="form-row">
+        <label for="numero_compte">N° de compte</label>
+        <input type="text" name="numero_compte" id="numero_compte" value="{{ profil.numero_compte or '' }}">
+    </div>
+    <div class="form-row">
+        <label for="cle_rib">Clé RIB</label>
+        <input type="text" name="cle_rib" id="cle_rib" value="{{ profil.cle_rib or '' }}">
+    </div>
+
+    <h2>TVA</h2>
+    <div id="tva-badge">
+        {% include "profil/_tva_badge.html" %}
+    </div>
+    <div class="form-row" style="margin-top: 12px;">
+        <label for="assujetti_tva">Assujetti TVA</label>
+        <input type="checkbox" name="assujetti_tva" id="assujetti_tva" value="true"
+               {% if profil.assujetti_tva %}checked{% endif %}
+               style="width: auto; justify-self: start;">
+    </div>
+    <div class="form-row">
+        <label for="tva_taux_defaut">Taux TVA défaut (%)</label>
+        <input type="text" name="tva_taux_defaut" id="tva_taux_defaut"
+               value="{{ profil.tva_taux_defaut or '' }}" placeholder="20">
+    </div>
+    <div class="form-row">
+        <label for="mention_legale_non_assujetti">Mention franchise</label>
+        <input type="text" name="mention_legale_non_assujetti" id="mention_legale_non_assujetti"
+               value="{{ profil.mention_legale_non_assujetti }}">
+    </div>
+    <p class="note">
+        Changer ce statut n'affecte pas les factures déjà émises — chaque facture fige sa propre mention TVA.
+    </p>
+
+    <h2>Mentions par défaut</h2>
+    <div class="form-row">
+        <label for="lieu_emission">Lieu d'émission</label>
+        <input type="text" name="lieu_emission" id="lieu_emission" value="{{ profil.lieu_emission }}">
+    </div>
+    <div class="form-row">
+        <label for="objet_defaut">Objet par défaut</label>
+        <input type="text" name="objet_defaut" id="objet_defaut" value="{{ profil.objet_defaut }}">
+    </div>
+    <div class="form-row">
+        <label for="designation_defaut">Désignation par défaut</label>
+        <input type="text" name="designation_defaut" id="designation_defaut" value="{{ profil.designation_defaut }}">
+    </div>
+    <div class="form-row">
+        <label for="mentions_pied_page">Pied de page</label>
+        <textarea name="mentions_pied_page" id="mentions_pied_page">{{ profil.mentions_pied_page or '' }}</textarea>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit">Enregistrer le profil</button>
+    </div>
+</div>
+</form>
+{% endblock %}

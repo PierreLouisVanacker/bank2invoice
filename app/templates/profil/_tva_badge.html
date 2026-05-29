@@ -1,0 +1,9 @@
+{% if profil.assujetti_tva %}
+    <span class="badge assujetti">Assujetti TVA</span>
+    {% if profil.tva_taux_defaut %}
+        <span style="color: var(--muted); margin-left: 8px;">Taux par défaut : {{ profil.tva_taux_defaut }}%</span>
+    {% endif %}
+{% else %}
+    <span class="badge franchise">Franchise en base</span>
+    <span style="color: var(--muted); margin-left: 8px; font-style: italic;">{{ profil.mention_legale_non_assujetti }}</span>
+{% endif %}

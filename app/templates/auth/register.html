@@ -1,0 +1,35 @@
+{% extends "auth/_layout.html" %}
+{% block title %}Inscription — bank2invoice{% endblock %}
+{% block content %}
+<h1>Créer un compte</h1>
+
+{% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
+
+<form method="post" action="/register">
+    <div class="form-row">
+        <label for="nom_affichage">Nom d'affichage</label>
+        <input type="text" name="nom_affichage" id="nom_affichage" required
+               value="{{ nom_affichage or '' }}" autofocus>
+    </div>
+    <div class="form-row">
+        <label for="email">Email</label>
+        <input type="email" name="email" id="email" required
+               value="{{ email or '' }}" autocomplete="email">
+    </div>
+    <div class="form-row">
+        <label for="password">Mot de passe (min. 8 caractères)</label>
+        <input type="password" name="password" id="password" required
+               minlength="8" autocomplete="new-password">
+    </div>
+    <div class="form-row">
+        <label for="password_confirm">Confirmer le mot de passe</label>
+        <input type="password" name="password_confirm" id="password_confirm" required
+               minlength="8" autocomplete="new-password">
+    </div>
+    <button type="submit">Créer mon compte</button>
+</form>
+
+<div class="auth-switch">
+    Déjà un compte ? <a href="/login">Se connecter</a>
+</div>
+{% endblock %}

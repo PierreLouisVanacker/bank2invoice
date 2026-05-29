@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bank2invoice"
+version = "0.1.0"
+description = "Générateur de factures depuis relevés bancaires"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlmodel>=0.0.22",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.12",
+    "pdfplumber>=0.11",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "bcrypt>=4.2",
+    "itsdangerous>=2.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.7",
+]
+
+[project.scripts]
+b2i-seed = "app.cli:seed"
+b2i-reset = "app.cli:reset"
+
+# Indique explicitement à setuptools que seul `app/` est un package Python.
+# Sans ça, il tombe sur app/ et data/ à la racine et refuse de choisir.
+[tool.setuptools]
+packages = [
+    "app",
+    "app.routers",
+    "app.pipeline",
+    "app.llm",
+    "app.invoice",
+]
+
+# Inclut les templates (.j2, .html) dans le package.
+[tool.setuptools.package-data]
+"app.invoice" = ["templates/*.j2"]
+"app" = ["templates/**/*.html", "templates/**/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]

@@ -1,0 +1,92 @@
+{# Contenu de <tr> pour une transaction. Réutilisé pour le swap HTMX d'une seule ligne. #}
+<td style="text-align: center;">
+    {% if tx.est_virement_entrant %}
+        <input type="checkbox"
+               name="inclus"
+               {% if tx.inclus %}checked{% endif %}
+               hx-post="/transactions/{{ tx.id }}/inclure"
+               hx-target="#tx-row-{{ tx.id }}"
+               hx-swap="innerHTML"
+               hx-trigger="change">
+    {% else %}
+        <span class="muted" title="Non concerné">—</span>
+    {% endif %}
+</td>
+<td>{{ tx.date.strftime("%d/%m/%Y") }}</td>
+<td class="num">
+    {% if tx.sens == "debit" %}
+        <span style="color: var(--red);">−{{ tx.montant }}</span>
+    {% else %}
+        <span style="color: var(--green);">+{{ tx.montant }}</span>
+    {% endif %}
+</td>
+<td>
+    {% if tx.est_virement_entrant %}
+        <select class="inline-input"
+                name="emetteur_type"
+                hx-patch="/transactions/{{ tx.id }}"
+                hx-trigger="change"
+                hx-target="#tx-row-{{ tx.id }}"
+                hx-swap="innerHTML">
+            <option value="">—</option>
+            <option value="personne" {% if tx.emetteur_type == "personne" %}selected{% endif %}>Personne</option>
+            <option value="societe" {% if tx.emetteur_type == "societe" %}selected{% endif %}>Société</option>
+            <option value="inconnu" {% if tx.emetteur_type == "inconnu" %}selected{% endif %}>Inconnu</option>
+        </select>
+    {% else %}
+        <span class="muted">{{ tx.review_status }}</span>
+    {% endif %}
+</td>
+<td>
+    {% if tx.est_virement_entrant %}
+        {% if tx.emetteur_type == "personne" %}
+            {{ tx.emetteur_civilite or "" }} {{ tx.emetteur_prenom or "" }} <strong>{{ tx.emetteur_nom or "" }}</strong>
+        {% elif tx.emetteur_type == "societe" %}
+            <strong>{{ tx.emetteur_raison_sociale or "" }}</strong>
+        {% else %}
+            <span class="muted">(à extraire)</span>
+        {% endif %}
+    {% endif %}
+</td>
+<td>
+    {% if tx.est_virement_entrant %}
+        <select class="inline-input"
+                name="client_id"
+                hx-patch="/transactions/{{ tx.id }}/client"
+                hx-trigger="change"
+                hx-target="#tx-row-{{ tx.id }}"
+                hx-swap="innerHTML">
+            <option value="">— Aucun —</option>
+            {% for c in clients %}
+                <option value="{{ c.id }}" {% if tx.client_id == c.id %}selected{% endif %}>
+                    {% if c.type == "personne" %}
+                        {{ c.prenom or "" }} {{ c.nom }}
+                    {% else %}
+                        {{ c.raison_sociale or c.nom }}
+                    {% endif %}
+                </option>
+            {% endfor %}
+        </select>
+    {% endif %}
+</td>
+<td class="libelle" title="{{ tx.libelle_brut }}">
+    {{ tx.libelle_brut }}
+</td>
+<td>
+    {% if tx.est_virement_entrant %}
+        <button class="secondary"
+                hx-get="/transactions/{{ tx.id }}/panel"
+                hx-target="#panel-slot"
+                hx-swap="innerHTML"
+                style="font-size: 0.8rem; padding: 3px 8px;">
+            Détails
+        </button>
+    {% endif %}
+</td>
+{# Out-of-band : met à jour le compteur "À inclure" en haut de page.
+   Rendu UNIQUEMENT quand la ligne est renvoyée seule après un toggle
+   (count_inclus défini). Au rendu initial du tableau, count_inclus n'est
+   pas défini → pas de span, donc pas de duplication d'id. #}
+{% if count_inclus is defined and count_inclus is not none %}
+<span id="count-inclus" hx-swap-oob="true">{{ count_inclus }}</span>
+{% endif %}

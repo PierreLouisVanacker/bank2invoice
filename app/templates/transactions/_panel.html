@@ -1,0 +1,131 @@
+<div class="panel-overlay"
+     onclick="if(event.target === this) document.getElementById('panel-slot').innerHTML = ''">
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Transaction #{{ tx.id }}</h2>
+            <button class="panel-close"
+                    onclick="document.getElementById('panel-slot').innerHTML = ''"
+                    aria-label="Fermer">×</button>
+        </div>
+
+        <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
+            <strong>Date :</strong> {{ tx.date.strftime("%d/%m/%Y") }}<br>
+            <strong>Montant :</strong> {{ tx.montant }} € ({{ tx.sens }})<br>
+            <strong>Libellé brut :</strong>
+            <div style="font-family: ui-monospace, monospace; background: var(--bg); padding: 8px; border-radius: 4px; margin-top: 4px; word-break: break-word;">
+                {{ tx.libelle_brut }}
+            </div>
+        </div>
+
+        <form hx-post="/transactions/{{ tx.id }}/details"
+              hx-target="#tx-row-{{ tx.id }}"
+              hx-swap="innerHTML"
+              hx-on::after-request="if(event.detail.successful) document.getElementById('panel-slot').innerHTML = ''">
+
+            <h3 style="font-size: 0.95rem; color: var(--muted); margin-bottom: 12px;">Émetteur extrait</h3>
+
+            <div class="form-row">
+                <label for="emetteur_type">Type</label>
+                <select name="emetteur_type" id="emetteur_type">
+                    <option value="">—</option>
+                    <option value="personne" {% if tx.emetteur_type == "personne" %}selected{% endif %}>Personne</option>
+                    <option value="societe" {% if tx.emetteur_type == "societe" %}selected{% endif %}>Société</option>
+                    <option value="inconnu" {% if tx.emetteur_type == "inconnu" %}selected{% endif %}>Inconnu</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="emetteur_civilite">Civilité</label>
+                <select name="emetteur_civilite" id="emetteur_civilite">
+                    <option value="">—</option>
+                    <option value="M." {% if tx.emetteur_civilite == "M." %}selected{% endif %}>M.</option>
+                    <option value="Mme" {% if tx.emetteur_civilite == "Mme" %}selected{% endif %}>Mme</option>
+                    <option value="Mlle" {% if tx.emetteur_civilite == "Mlle" %}selected{% endif %}>Mlle</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="emetteur_prenom">Prénom</label>
+                <input type="text" name="emetteur_prenom" id="emetteur_prenom"
+                       value="{{ tx.emetteur_prenom or '' }}">
+            </div>
+
+            <div class="form-row">
+                <label for="emetteur_nom">Nom</label>
+                <input type="text" name="emetteur_nom" id="emetteur_nom"
+                       value="{{ tx.emetteur_nom or '' }}">
+            </div>
+
+            <div class="form-row">
+                <label for="emetteur_raison_sociale">Raison sociale</label>
+                <input type="text" name="emetteur_raison_sociale" id="emetteur_raison_sociale"
+                       value="{{ tx.emetteur_raison_sociale or '' }}">
+            </div>
+
+            <h3 style="font-size: 0.95rem; color: var(--muted); margin: 20px 0 12px;">Client associé</h3>
+
+            {% if flash %}
+            <p style="color: var(--green); font-size: 0.85rem; background: var(--green-bg); padding: 8px 10px; border-radius: 6px;">
+                ✓ {{ flash }}
+            </p>
+            {% endif %}
+            {% if error %}
+            <p style="color: var(--red); font-size: 0.85rem; background: var(--red-bg); padding: 8px 10px; border-radius: 6px;">
+                ✗ {{ error }}
+            </p>
+            {% endif %}
+
+            <div class="form-row">
+                <label for="client_id">Client</label>
+                <select name="client_id" id="client_id">
+                    <option value="">— Aucun —</option>
+                    {% for c in clients %}
+                        <option value="{{ c.id }}" {% if tx.client_id == c.id %}selected{% endif %}>
+                            {% if c.type == "personne" %}
+                                {{ c.prenom or "" }} {{ c.nom }}
+                            {% else %}
+                                {{ c.raison_sociale or c.nom }}
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="margin: 8px 0 4px;">
+                <button type="button" class="secondary"
+                        style="font-size: 0.82rem;"
+                        hx-post="/transactions/{{ tx.id }}/create-client"
+                        hx-include="#emetteur_type, #emetteur_civilite, #emetteur_prenom, #emetteur_nom, #emetteur_raison_sociale"
+                        hx-target="#panel-slot"
+                        hx-swap="innerHTML">
+                    + Créer ce client à partir de l'émetteur ci-dessus
+                </button>
+            </div>
+            <p class="muted" style="font-size: 0.78rem;">
+                Tu peux associer un client existant, en créer un ci-dessous, ou
+                laisser « Aucun » : dans ce cas la facture utilisera directement
+                le nom de l'émetteur (un client sera créé automatiquement).
+            </p>
+
+            <h3 style="font-size: 0.95rem; color: var(--muted); margin: 20px 0 12px;">Date de la facture</h3>
+            <div class="form-row">
+                <label for="date_facture">Date</label>
+                <input type="date" name="date_facture" id="date_facture"
+                       value="{{ (tx.date_facture_override or tx.date).isoformat() }}">
+            </div>
+            <p class="muted" style="font-size: 0.78rem;">
+                Date affichée sur la facture. Par défaut, la date du virement
+                ({{ tx.date.strftime("%d/%m/%Y") }}). La numérotation, elle, suit
+                la date de génération (aujourd'hui).
+            </p>
+
+            <div class="form-actions">
+                <button type="button" class="secondary"
+                        onclick="document.getElementById('panel-slot').innerHTML = ''">
+                    Annuler
+                </button>
+                <button type="submit">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>

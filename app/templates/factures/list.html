@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Factures — bank2invoice{% endblock %}
+
+{% block content %}
+<h1>Registre des factures</h1>
+<p class="muted">
+    Factures émises. Une fois générée, une facture est figée (contrainte légale).
+    Pour corriger, il faudrait émettre un avoir (hors périmètre MVP).
+</p>
+
+{% if not factures %}
+<div class="card">
+    <p>Aucune facture émise pour l'instant.</p>
+</div>
+{% else %}
+<table class="data">
+    <thead>
+        <tr>
+            <th>Numéro</th>
+            <th>Date facture</th>
+            <th>Date émission</th>
+            <th>Client</th>
+            <th class="num">Montant TTC</th>
+            <th>TVA</th>
+            <th>Statut</th>
+            <th>PDF</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for f in factures %}
+        <tr>
+            <td><strong>{{ f.numero }}</strong></td>
+            <td>{{ f.date_facture.strftime("%d/%m/%Y") }}</td>
+            <td>{{ f.date_emission.strftime("%d/%m/%Y") }}</td>
+            <td>
+                {% set c = clients.get(f.client_id) %}
+                {% if c %}
+                    {% if c.type == "personne" %}{{ c.prenom or "" }} {{ c.nom }}{% else %}{{ c.raison_sociale or c.nom }}{% endif %}
+                {% else %}#{{ f.client_id }}{% endif %}
+            </td>
+            <td class="num">{{ f.montant_ttc }} €</td>
+            <td>
+                {% if f.tva_taux and f.tva_taux > 0 %}
+                    {{ f.tva_taux }}%
+                {% else %}
+                    <span class="muted" title="{{ f.mention_legale_tva }}">Franchise</span>
+                {% endif %}
+            </td>
+            <td><span class="badge {{ 'auto_ok' if f.status == 'active' else 'exclu' }}">{{ f.status }}</span></td>
+            <td><a href="/factures/{{ f.id }}/pdf" target="_blank">Télécharger</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

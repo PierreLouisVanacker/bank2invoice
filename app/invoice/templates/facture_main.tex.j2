@@ -1,0 +1,18 @@
+% Template Jinja2 (delimiters VAR et BLOCK)
+% Point d'entrée : assemble header + variables facture + lignes + footer
+\input{facture_header.tex}
+
+\def\FactureNum       {\VAR{numero_facture}}
+\def\FactureAcquittee {\VAR{facture_acquittee}}    % oui/non
+\def\FactureLieu      {\VAR{lieu_emission}}
+\def\FactureObjet     {\VAR{objet}}
+
+% Infos Client
+\def\ClientNom{\VAR{client_nom}}
+
+
+% Liste des produits facturés : Désignation, Montant HT
+\BLOCK{ for ligne in lignes }
+\AjouterLigne{\VAR{ligne.designation}}{\VAR{ligne.montant}}
+\BLOCK{ endfor }
+\input{facture_footer.tex}

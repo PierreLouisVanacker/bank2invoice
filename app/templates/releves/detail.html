@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Review — {{ releve.nom_fichier }}{% endblock %}
+
+{% block content %}
+<p style="margin-top: 0;">
+    <a href="/releves">← Tous les relevés</a>
+</p>
+
+<h1>Review — {{ releve.nom_fichier }}</h1>
+
+<div class="toolbar">
+    <span class="stat">Banque <strong>{{ releve.banque }}</strong></span>
+    {% if releve.date_debut and releve.date_fin %}
+    <span class="stat">
+        Période <strong>{{ releve.date_debut.strftime("%d/%m/%Y") }} → {{ releve.date_fin.strftime("%d/%m/%Y") }}</strong>
+    </span>
+    {% endif %}
+    <span class="stat">Total transactions <strong>{{ stats.total }}</strong></span>
+    <span class="stat" style="color: var(--accent);">Entrants candidats <strong>{{ stats.entrants }}</strong></span>
+    <span class="stat" style="color: var(--green);">À inclure <strong id="count-inclus">{{ stats.inclus }}</strong></span>
+</div>
+
+<div class="toolbar">
+    <label>
+        <input type="checkbox" id="show-all"
+               onchange="document.body.classList.toggle('show-all-tx', this.checked)">
+        Afficher aussi les transactions exclues (débits, auto-virements…)
+    </label>
+</div>
+
+<style>
+    /* Par défaut on cache les non-entrants */
+    body:not(.show-all-tx) tr.tx-non-entrant { display: none; }
+</style>
+
+{% include "transactions/_table.html" %}
+
+<div style="margin-top: 24px; display: flex; align-items: center; gap: 16px;">
+    <button hx-post="/factures/generate/{{ releve.id }}"
+            hx-target="#generation-result"
+            hx-swap="innerHTML"
+            hx-indicator="#gen-indicator"
+            hx-disabled-elt="this"
+            hx-confirm="Générer les factures pour toutes les transactions cochées ? Cette action attribue des numéros définitifs.">
+        Générer les factures cochées
+    </button>
+    <span id="gen-indicator" class="htmx-indicator loading-row">
+        <span class="spinner"></span> Génération des factures (compilation PDF)…
+    </span>
+    <span class="muted">
+        Seules les transactions cochées « Inclure » seront générées.
+    </span>
+</div>
+
+<div id="generation-result" style="margin-top: 16px;"></div>
+{% endblock %}

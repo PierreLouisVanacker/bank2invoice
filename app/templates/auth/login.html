@@ -1,0 +1,25 @@
+{% extends "auth/_layout.html" %}
+{% block title %}Connexion — bank2invoice{% endblock %}
+{% block content %}
+<h1>Connexion</h1>
+
+{% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
+
+<form method="post" action="/login">
+    <div class="form-row">
+        <label for="email">Email</label>
+        <input type="email" name="email" id="email" required
+               value="{{ email or '' }}" autocomplete="email" autofocus>
+    </div>
+    <div class="form-row">
+        <label for="password">Mot de passe</label>
+        <input type="password" name="password" id="password" required
+               autocomplete="current-password">
+    </div>
+    <button type="submit">Se connecter</button>
+</form>
+
+<div class="auth-switch">
+    Pas encore de compte ? <a href="/register">Créer un compte</a>
+</div>
+{% endblock %}

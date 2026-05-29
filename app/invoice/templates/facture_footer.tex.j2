@@ -1,0 +1,92 @@
+% Template Jinja2 (delimiters VAR et BLOCK)
+% Variables attendues : profil.*, client_nom, lieu_emission, facture_acquittee
+\geometry{verbose,tmargin=4em,bmargin=8em,lmargin=6em,rmargin=6em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex plus 0.5ex minus 0.2ex}
+
+\thispagestyle{fancy}
+\pagestyle{fancy}
+\setlength{\parindent}{0pt}
+
+\renewcommand{\headrulewidth}{0pt}
+\cfoot{
+    \small{
+\VAR{profil_nom}\\
+\BLOCK{ if profil_telephone }Telephone : \VAR{profil_telephone} ~--~ \BLOCK{ endif }E-mail : \VAR{profil_email}\\
+SIREN \VAR{profil_siret}\BLOCK{ if profil_numero_tva } ~--~ Numéro TVA \VAR{profil_numero_tva}\BLOCK{ endif }}\\
+\BLOCK{ if profil_mentions_pied_page }
+    \tiny{
+\VAR{profil_mentions_pied_page}
+    }
+\BLOCK{ endif }
+}
+
+
+
+\begin{document}
+
+% Logo de la société
+%\includegraphics{logo.jpg}
+
+% Nom et adresse de la société
+\VAR{profil_nom} \\
+\VAR{profil_adresse} \\
+\VAR{profil_code_postal} \VAR{profil_ville}
+
+Facture \textnumero\,\FactureNum
+
+{\addtolength{\leftskip}{10.5cm} %in ERT
+    \textbf{\ClientNom}
+
+
+} %in ERT
+
+\hspace*{10.5cm}
+\FactureLieu, \today
+
+~\\~\\
+
+\textbf{Objet : \FactureObjet \\}
+
+
+%~\\
+\vspace{30mm}
+
+\begin{center}
+    \begin{tabular}{lrrr}
+        \textbf{Désignation ~~~~~~}   & \textbf{   }   & \textbf{   }   & \textbf{Montant (EUR)}   \\
+        \hline
+        \AfficheResultat{}
+    \end{tabular}
+\end{center}
+
+%~\\
+\vspace{50mm}
+
+\BLOCK{ if not assujetti_tva }
+\textit{\VAR{mention_legale_non_assujetti}}
+
+\vspace{5mm}
+\BLOCK{ endif }
+
+\ifthenelse{\equal{\FactureAcquittee}{oui}}{
+    Facture acquittée.
+}{
+
+    À régler par chèque ou par virement bancaire :
+
+    \begin{center}
+        \begin{tabular}{|c c c c|}
+            \BLOCK{ if profil_code_banque }
+            \hline  \textbf{Code banque}    & \textbf{Code guichet}  & \textbf{\textnumero{} de Compte}      & \textbf{Clé RIB}   \\
+                    \VAR{profil_code_banque}                & \VAR{profil_code_guichet}              & \VAR{profil_numero_compte}             & \VAR{profil_cle_rib}             \\
+            \BLOCK{ endif }
+            \hline  \textbf{IBAN \textnumero}        & \multicolumn{3}{|l|}{ \VAR{profil_iban} }        \\
+            \hline  \textbf{Code BIC}       & \multicolumn{3}{|l|}{ \VAR{profil_bic} }       \\
+            \hline
+        \end{tabular}
+    \end{center}
+
+}
+
+\end{document}

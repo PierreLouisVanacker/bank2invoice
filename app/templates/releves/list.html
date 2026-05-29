@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Relevés — bank2invoice{% endblock %}
+
+{% block content %}
+<h1>Relevés bancaires</h1>
+
+<div id="dropzone"
+     style="border: 2px dashed var(--border); border-radius: 10px; padding: 28px;
+            text-align: center; background: white; margin-bottom: 24px;
+            transition: all 0.15s;">
+    <form id="upload-form" action="/releves/upload" method="post"
+          enctype="multipart/form-data" style="margin: 0;">
+        <p style="margin: 0 0 12px; color: var(--muted);">
+            Glisse un PDF de relevé ici, ou
+            <label for="file-input" style="color: var(--accent); cursor: pointer; text-decoration: underline;">
+                sélectionne un fichier
+            </label>
+        </p>
+        <input type="file" id="file-input" name="file" accept="application/pdf"
+               style="display: none;" onchange="startUpload()">
+        <p class="muted" style="margin: 0; font-size: 0.8rem;">
+            Le relevé est analysé automatiquement (banque, transactions, virements entrants).
+        </p>
+    </form>
+</div>
+
+<script>
+function startUpload() {
+    // Affiche l'overlay puis soumet le formulaire
+    const overlay = document.getElementById('upload-overlay');
+    if (overlay) overlay.classList.add('show');
+    document.getElementById('upload-form').submit();
+}
+(function() {
+    const dz = document.getElementById('dropzone');
+    const input = document.getElementById('file-input');
+    const form = document.getElementById('upload-form');
+    if (!dz) return;
+
+    ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => {
+        e.preventDefault();
+        dz.style.borderColor = 'var(--accent)';
+        dz.style.background = 'var(--accent-bg)';
+    }));
+    ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => {
+        e.preventDefault();
+        dz.style.borderColor = 'var(--border)';
+        dz.style.background = 'white';
+    }));
+    dz.addEventListener('drop', e => {
+        if (e.dataTransfer.files.length > 0) {
+            input.files = e.dataTransfer.files;
+            startUpload();
+        }
+    });
+})();
+</script>
+
+{% if not releves %}
+<div class="card">
+    <p>Aucun relevé en base pour l'instant. Dépose ton premier PDF ci-dessus.</p>
+</div>
+{% else %}
+<table class="data">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Fichier</th>
+            <th>Banque</th>
+            <th>Période</th>
+            <th>Statut</th>
+            <th class="num">Transactions</th>
+            <th class="num">Entrants candidats</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in releves %}
+        <tr>
+            <td>#{{ r.id }}</td>
+            <td>{{ r.nom_fichier }}</td>
+            <td>{{ r.banque or "—" }}</td>
+            <td>
+                {% if r.date_debut and r.date_fin %}
+                    {{ r.date_debut.strftime("%d/%m/%Y") }} → {{ r.date_fin.strftime("%d/%m/%Y") }}
+                {% else %}—{% endif %}
+            </td>
+            <td><span class="badge {{ r.statut }}">{{ r.statut }}</span></td>
+            <td class="num">{{ stats[r.id].total }}</td>
+            <td class="num">{{ stats[r.id].entrants }}</td>
+            <td>
+                {% if r.statut == "parse" %}
+                    <a href="/releves/{{ r.id }}">Review →</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}
