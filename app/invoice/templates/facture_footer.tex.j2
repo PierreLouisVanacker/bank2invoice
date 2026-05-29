@@ -72,21 +72,20 @@ Facture \textnumero\,\FactureNum
 \ifthenelse{\equal{\FactureAcquittee}{oui}}{
     Facture acquittée.
 }{
-
-    À régler par chèque ou par virement bancaire :
-
-    \begin{center}
-        \begin{tabular}{|c c c c|}
-            \BLOCK{ if profil_code_banque }
-            \hline  \textbf{Code banque}    & \textbf{Code guichet}  & \textbf{\textnumero{} de Compte}      & \textbf{Clé RIB}   \\
-                    \VAR{profil_code_banque}                & \VAR{profil_code_guichet}              & \VAR{profil_numero_compte}             & \VAR{profil_cle_rib}             \\
-            \BLOCK{ endif }
-            \hline  \textbf{IBAN \textnumero}        & \multicolumn{3}{|l|}{ \VAR{profil_iban} }        \\
-            \hline  \textbf{Code BIC}       & \multicolumn{3}{|l|}{ \VAR{profil_bic} }       \\
-            \hline
-        \end{tabular}
-    \end{center}
-
 }
+
+\vspace{5mm}
+
+\begin{center}
+    \begin{tabular}{|c c c c|}
+        \BLOCK{ if profil_code_banque }
+        \hline  \textbf{Code banque}    & \textbf{Code guichet}  & \textbf{\textnumero{} de Compte}      & \textbf{Clé RIB}   \\
+                \VAR{profil_code_banque}                & \VAR{profil_code_guichet}              & \VAR{profil_numero_compte}             & \VAR{profil_cle_rib}             \\
+        \BLOCK{ endif }
+        \hline  \textbf{IBAN \textnumero}        & \multicolumn{3}{|l|}{ \VAR{profil_iban} }        \\
+        \hline  \textbf{Code BIC}       & \multicolumn{3}{|l|}{ \VAR{profil_bic} }       \\
+        \hline
+    \end{tabular}
+\end{center}
 
 \end{document}
